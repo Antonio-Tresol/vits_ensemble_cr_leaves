@@ -2,25 +2,31 @@
 
 # System
 import os
+
 # Utils
 import pickle
 import numpy as np
 from typing import List
 from enum import Enum
+
 # Sklearn
 from sklearn.model_selection import train_test_split
 from sklearn.utils import class_weight
+
 # Torch
 from torch.utils.data import Dataset, DataLoader, Subset, WeightedRandomSampler
 from pytorch_lightning import LightningDataModule
+
 # Customs
 from datasets import ImageFolderDataset
+
 
 # Enum for different sampling strategies
 class Sampling(Enum):
     NUMPY = 1
     SKLEARN = 2
     NONE = 3
+
 
 # Utility class for managing indices
 class IndexManager:
@@ -50,10 +56,16 @@ class IndexManager:
         with open(indices_path, "rb") as file:
             return pickle.load(file)
 
+
 # Utility class for splitting data into train and test sets
 class DataSplitter:
     @staticmethod
-    def split_data(folder_dataset: ImageFolderDataset, indices_path: str, test_size: float, use_index: bool):
+    def split_data(
+        folder_dataset: ImageFolderDataset,
+        indices_path: str,
+        test_size: float,
+        use_index: bool,
+    ):
         """
         Split data into train and test indices.
 
@@ -77,10 +89,13 @@ class DataSplitter:
             IndexManager.save_indices(indices, indices_path)
             return indices
 
+
 # Utility class for creating data loaders
 class DataLoaderCreator:
     @staticmethod
-    def create_dataloader(dataset: Dataset, sampler=None, shuffle: bool=False, num_workers: int=1):
+    def create_dataloader(
+        dataset: Dataset, sampler=None, shuffle: bool = False, num_workers: int = 1
+    ):
         """
         Create a DataLoader for a dataset.
 
@@ -103,6 +118,7 @@ class DataLoaderCreator:
             persistent_workers=True,
         )
 
+
 class SamplerFactory:
     @staticmethod
     def create_sampler(sampling: Sampling, train_dataset: Dataset, train_labels):
@@ -119,13 +135,13 @@ class SamplerFactory:
         """
         if sampling == Sampling.NONE:
             return None
-    
+
         elif sampling == Sampling.NUMPY:
             class_counts = np.array(
                 [np.sum(train_labels == c) for c in np.unique(train_labels)]
             )
             class_weights = 1 / class_counts
-                
+
             return WeightedRandomSampler(class_weights, len(train_dataset))
         else:
             class_weights = class_weight.compute_class_weight(
@@ -140,12 +156,12 @@ class ImagesDataModule(LightningDataModule):
         dataset: str,
         root_dir: str,
         batch_size: int,
-        test_size:float =0.5,
-        use_index:bool =True,
-        indices_dir:str =None,
-        sampling:Sampling=Sampling.NONE,
+        test_size: float = 0.5,
+        use_index: bool = True,
+        indices_dir: str = None,
+        sampling: Sampling = Sampling.NONE,
         train_transform=None,
-        test_transform=None
+        test_transform=None,
     ):
         """
         Initialize the ImageDataModule.
@@ -168,31 +184,31 @@ class ImagesDataModule(LightningDataModule):
         self.test_size = test_size
         self.use_index = use_index
         self.sampling = sampling
-        
+
         # Initialize training and test folders
-        self.train_folder = ImageFolderDataset(
-            root=root_dir, transform=train_transform
-        )
-        self.test_folder = ImageFolderDataset(
-            root=root_dir, transform=test_transform
-        )
-        
+        self.train_folder = ImageFolderDataset(root=root_dir, transform=train_transform)
+        self.test_folder = ImageFolderDataset(root=root_dir, transform=test_transform)
+
         self.class_counts = self.train_folder.class_counts
         self.indices_path = os.path.join(indices_dir, str(dataset) + ".pkl")
-        
+
     def prepare_data(self):
         """
         Prepare data for training and testing.
         """
         # Split train and test indices
-        self.train_indices, self.test_indices = DataSplitter.split_data(self.train_folder, self.indices_path, self.test_size, self.use_index)
+        self.train_indices, self.test_indices = DataSplitter.split_data(
+            self.train_folder, self.indices_path, self.test_size, self.use_index
+        )
         # Split the datasets
         self.train_dataset = Subset(self.train_folder, self.train_indices)
         self.test_dataset = Subset(self.test_folder, self.test_indices)
         train_labels = np.array(self.train_folder.targets)[self.train_indices]
         # Create a sampler (if needed)
-        self.train_sampler = SamplerFactory.create_sampler(self.sampling, self.train_dataset, train_labels)
-        
+        self.train_sampler = SamplerFactory.create_sampler(
+            self.sampling, self.train_dataset, train_labels
+        )
+
     def create_data_loaders(self):
         """
         Create data loaders for training and testing.
@@ -200,9 +216,13 @@ class ImagesDataModule(LightningDataModule):
         # Shuffle flag
         shuffle = True if self.sampling == Sampling.NONE else False
         # Create data loaders
-        self.train_loader = DataLoaderCreator.create_dataloader(self.train_dataset, self.train_sampler, shuffle=shuffle, num_workers=8)
-        self.test_loader = DataLoaderCreator.create_dataloader(self.test_dataset, num_workers=8)
-        
+        self.train_loader = DataLoaderCreator.create_dataloader(
+            self.train_dataset, self.train_sampler, shuffle=shuffle, num_workers=8
+        )
+        self.test_loader = DataLoaderCreator.create_dataloader(
+            self.test_dataset, num_workers=8
+        )
+
     def train_dataloader(self):
         """
         Get the training data loader.
@@ -230,18 +250,19 @@ class ImagesDataModule(LightningDataModule):
         """
         return self.test_loader
 
+
 # CR Leaves specific data module
 class CRLeavesDataModule(ImagesDataModule):
     def __init__(
         self,
         root_dir: str,
         batch_size: int,
-        test_size:float =0.5,
-        use_index:bool =True,
-        indices_dir:str =None,
-        sampling:Sampling=Sampling.NONE,
+        test_size: float = 0.5,
+        use_index: bool = True,
+        indices_dir: str = None,
+        sampling: Sampling = Sampling.NONE,
         train_transform=None,
-        test_transform=None
+        test_transform=None,
     ):
         """
         Initialize a CRLeaves dataset data module.
@@ -265,6 +286,5 @@ class CRLeavesDataModule(ImagesDataModule):
             indices_dir=indices_dir,
             sampling=sampling,
             train_transform=train_transform,
-            test_transform=test_transform
+            test_transform=test_transform,
         )
-        
