@@ -2,24 +2,19 @@
 
 # System
 import os
-
 # Utils
 import pickle
 import numpy as np
 from typing import List
 from enum import Enum
-
 # Sklearn
 from sklearn.model_selection import train_test_split
 from sklearn.utils import class_weight
-
 # Torch
 from torch.utils.data import Dataset, DataLoader, Subset, WeightedRandomSampler
 from pytorch_lightning import LightningDataModule
-
 # Customs
 from datasets import ImageFolderDataset
-
 
 # Enum for different sampling strategies
 class Sampling(Enum):
@@ -27,35 +22,16 @@ class Sampling(Enum):
     SKLEARN = 2
     NONE = 3
 
-
+# Utility class for managing indices
 class IndexManager:
-    """
-    A static class for managing indices.
-
-    This class provides methods to save and load indices to/from a file.
-
-    Attributes:
-        None
-
-    Methods:
-        save_indices(indices: List[int], indices_path: str) -> None:
-            Save indices to a file.
-
-        load_indices(indices_path: str) -> Tuple:
-            Load indices from a file.
-    """
-
     @staticmethod
     def save_indices(indices: List[int], indices_path: str):
         """
         Save indices to a file.
 
         Args:
-            indices (List[int]): List of indices to be saved.
+            indices (tuple): Tuple containing train and test indices.
             indices_path (str): Path to the file where indices will be saved.
-
-        Returns:
-            None
         """
         with open(indices_path, "wb") as file:
             pickle.dump(indices, file)
@@ -74,26 +50,10 @@ class IndexManager:
         with open(indices_path, "rb") as file:
             return pickle.load(file)
 
-
+# Utility class for splitting data into train and test sets
 class DataSplitter:
-    """
-    A static class for splitting data into train and test sets.
-
-    This class provides a method to split data into train and test indices.
-    Attributes:
-        None
-    Methods:
-        split_data(folder_dataset: ImageFolderDataset, indices_path: str, test_size: float, use_index: bool) -> tuple:
-            Split data into train and test indices.
-    """
-
     @staticmethod
-    def split_data(
-        folder_dataset: ImageFolderDataset,
-        indices_path: str,
-        test_size: float,
-        use_index: bool,
-    ):
+    def split_data(folder_dataset: ImageFolderDataset, indices_path: str, test_size: float, use_index: bool):
         """
         Split data into train and test indices.
 
@@ -117,21 +77,10 @@ class DataSplitter:
             IndexManager.save_indices(indices, indices_path)
             return indices
 
-
+# Utility class for creating data loaders
 class DataLoaderCreator:
-    """
-    A class that creates a DataLoader for a dataset.
-    Attributes:
-        None
-    Methods:
-        create_dataloader(dataset: Dataset, sampler=None, shuffle: bool = False, num_workers: int = 1) -> DataLoader:
-            Create a DataLoader for a dataset.
-    """
-
     @staticmethod
-    def create_dataloader(
-        dataset: Dataset, sampler=None, shuffle: bool = False, num_workers: int = 1
-    ) -> DataLoader:
+    def create_dataloader(dataset: Dataset, batch_size: int, sampler=None, shuffle: bool=False, num_workers: int=1):
         """
         Create a DataLoader for a dataset.
 
@@ -146,7 +95,7 @@ class DataLoaderCreator:
         """
         return DataLoader(
             dataset,
-            batch_size=dataset.batch_size,
+            batch_size=batch_size,
             sampler=sampler,
             shuffle=shuffle,
             num_workers=num_workers,
@@ -154,17 +103,7 @@ class DataLoaderCreator:
             persistent_workers=True,
         )
 
-
 class SamplerFactory:
-    """
-    Factory static class for creating samplers based on the specified sampling strategy.
-    Attributes:
-        None
-    Methods:
-        create_sampler(sampling: Sampling, train_dataset: Dataset, train_labels) -> Sampler or None:
-            Create a sampler based on the specified sampling strategy.
-    """
-
     @staticmethod
     def create_sampler(sampling: Sampling, train_dataset: Dataset, train_labels):
         """
@@ -180,13 +119,13 @@ class SamplerFactory:
         """
         if sampling == Sampling.NONE:
             return None
-
+    
         elif sampling == Sampling.NUMPY:
             class_counts = np.array(
                 [np.sum(train_labels == c) for c in np.unique(train_labels)]
             )
             class_weights = 1 / class_counts
-
+                
             return WeightedRandomSampler(class_weights, len(train_dataset))
         else:
             class_weights = class_weight.compute_class_weight(
@@ -196,19 +135,17 @@ class SamplerFactory:
 
 
 class ImagesDataModule(LightningDataModule):
-    """Implements a LightningDataModule from PyTorch Lightning for image datasets."""
-
     def __init__(
         self,
         dataset: str,
         root_dir: str,
         batch_size: int,
-        test_size: float = 0.5,
-        use_index: bool = True,
-        indices_dir: str = None,
-        sampling: Sampling = Sampling.NONE,
+        test_size:float =0.5,
+        use_index:bool =True,
+        indices_dir:str =None,
+        sampling:Sampling=Sampling.NONE,
         train_transform=None,
-        test_transform=None,
+        test_transform=None
     ):
         """
         Initialize the ImageDataModule.
@@ -231,31 +168,32 @@ class ImagesDataModule(LightningDataModule):
         self.test_size = test_size
         self.use_index = use_index
         self.sampling = sampling
-
+        
         # Initialize training and test folders
-        self.train_folder = ImageFolderDataset(root=root_dir, transform=train_transform)
-        self.test_folder = ImageFolderDataset(root=root_dir, transform=test_transform)
-
+        self.train_folder = ImageFolderDataset(
+            root_dir=root_dir, transform=train_transform
+        )
+        self.test_folder = ImageFolderDataset(
+            root_dir=root_dir, transform=test_transform
+        )
+        
         self.class_counts = self.train_folder.class_counts
+        self.classes = self.train_folder.classes
         self.indices_path = os.path.join(indices_dir, str(dataset) + ".pkl")
-
+        
     def prepare_data(self):
         """
         Prepare data for training and testing.
         """
         # Split train and test indices
-        self.train_indices, self.test_indices = DataSplitter.split_data(
-            self.train_folder, self.indices_path, self.test_size, self.use_index
-        )
+        self.train_indices, self.test_indices = DataSplitter.split_data(self.train_folder, self.indices_path, self.test_size, self.use_index)
         # Split the datasets
         self.train_dataset = Subset(self.train_folder, self.train_indices)
         self.test_dataset = Subset(self.test_folder, self.test_indices)
-        train_labels = np.array(self.train_folder.targets)[self.train_indices]
+        train_labels = np.array(self.train_folder.labels)[self.train_indices]
         # Create a sampler (if needed)
-        self.train_sampler = SamplerFactory.create_sampler(
-            self.sampling, self.train_dataset, train_labels
-        )
-
+        self.train_sampler = SamplerFactory.create_sampler(self.sampling, self.train_dataset, train_labels)
+        
     def create_data_loaders(self):
         """
         Create data loaders for training and testing.
@@ -263,13 +201,9 @@ class ImagesDataModule(LightningDataModule):
         # Shuffle flag
         shuffle = True if self.sampling == Sampling.NONE else False
         # Create data loaders
-        self.train_loader = DataLoaderCreator.create_dataloader(
-            self.train_dataset, self.train_sampler, shuffle=shuffle, num_workers=8
-        )
-        self.test_loader = DataLoaderCreator.create_dataloader(
-            self.test_dataset, num_workers=8
-        )
-
+        self.train_loader = DataLoaderCreator.create_dataloader(self.train_dataset, self.batch_size, self.train_sampler, shuffle=shuffle, num_workers=8)
+        self.test_loader = DataLoaderCreator.create_dataloader(self.test_dataset, self.batch_size, num_workers=8)
+        
     def train_dataloader(self):
         """
         Get the training data loader.
@@ -297,23 +231,18 @@ class ImagesDataModule(LightningDataModule):
         """
         return self.test_loader
 
-
 # CR Leaves specific data module
 class CRLeavesDataModule(ImagesDataModule):
-    """CRLeavesDataModule class for loading the CRLeaves dataset.
-    Inherits from ImagesDataModule that implements a LightningDataModule for image datasets.
-    """
-
     def __init__(
         self,
         root_dir: str,
         batch_size: int,
-        test_size: float = 0.5,
-        use_index: bool = True,
-        indices_dir: str = None,
-        sampling: Sampling = Sampling.NONE,
+        test_size:float =0.5,
+        use_index:bool =True,
+        indices_dir:str =None,
+        sampling:Sampling=Sampling.NONE,
         train_transform=None,
-        test_transform=None,
+        test_transform=None
     ):
         """
         Initialize a CRLeaves dataset data module.
@@ -337,5 +266,6 @@ class CRLeavesDataModule(ImagesDataModule):
             indices_dir=indices_dir,
             sampling=sampling,
             train_transform=train_transform,
-            test_transform=test_transform,
+            test_transform=test_transform
         )
+        
