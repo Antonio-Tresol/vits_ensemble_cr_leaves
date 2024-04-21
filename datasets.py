@@ -14,8 +14,11 @@ from typing import List, Tuple
 from PIL import Image
 
 
-# Utility class for scanning a folder contents
 class FolderScanner:
+    """
+    A utility static class for scanning folders and counting files.
+    """
+
     @staticmethod
     def count_files(root_dir: str) -> dict:
         """
@@ -38,8 +41,11 @@ class FolderScanner:
         return sorted(folder_counts, key=folder_counts.get)
 
 
-# Utility class for building images and labels lists
 class ImageListBuilder:
+    """
+    A utility static class for building lists of image paths, corresponding labels, and class counts.
+    """
+
     @staticmethod
     def build_list(
         root_dir: str, folders: List[str]
@@ -73,6 +79,10 @@ class ImageListBuilder:
 
 
 class ImageFolderDataset(Dataset):
+    """
+    ImageFolderDataset class for loading implements the Dataset class for loading images from a folder structure.
+    """
+
     def __init__(self, root_dir: str, transform=None):
         """
         Initialize the ImageFolderDataset.

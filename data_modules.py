@@ -28,16 +28,34 @@ class Sampling(Enum):
     NONE = 3
 
 
-# Utility class for managing indices
 class IndexManager:
+    """
+    A static class for managing indices.
+
+    This class provides methods to save and load indices to/from a file.
+
+    Attributes:
+        None
+
+    Methods:
+        save_indices(indices: List[int], indices_path: str) -> None:
+            Save indices to a file.
+
+        load_indices(indices_path: str) -> Tuple:
+            Load indices from a file.
+    """
+
     @staticmethod
     def save_indices(indices: List[int], indices_path: str):
         """
         Save indices to a file.
 
         Args:
-            indices (tuple): Tuple containing train and test indices.
+            indices (List[int]): List of indices to be saved.
             indices_path (str): Path to the file where indices will be saved.
+
+        Returns:
+            None
         """
         with open(indices_path, "wb") as file:
             pickle.dump(indices, file)
@@ -57,8 +75,18 @@ class IndexManager:
             return pickle.load(file)
 
 
-# Utility class for splitting data into train and test sets
 class DataSplitter:
+    """
+    A static class for splitting data into train and test sets.
+
+    This class provides a method to split data into train and test indices.
+    Attributes:
+        None
+    Methods:
+        split_data(folder_dataset: ImageFolderDataset, indices_path: str, test_size: float, use_index: bool) -> tuple:
+            Split data into train and test indices.
+    """
+
     @staticmethod
     def split_data(
         folder_dataset: ImageFolderDataset,
@@ -90,12 +118,20 @@ class DataSplitter:
             return indices
 
 
-# Utility class for creating data loaders
 class DataLoaderCreator:
+    """
+    A class that creates a DataLoader for a dataset.
+    Attributes:
+        None
+    Methods:
+        create_dataloader(dataset: Dataset, sampler=None, shuffle: bool = False, num_workers: int = 1) -> DataLoader:
+            Create a DataLoader for a dataset.
+    """
+
     @staticmethod
     def create_dataloader(
         dataset: Dataset, sampler=None, shuffle: bool = False, num_workers: int = 1
-    ):
+    ) -> DataLoader:
         """
         Create a DataLoader for a dataset.
 
@@ -120,6 +156,15 @@ class DataLoaderCreator:
 
 
 class SamplerFactory:
+    """
+    Factory static class for creating samplers based on the specified sampling strategy.
+    Attributes:
+        None
+    Methods:
+        create_sampler(sampling: Sampling, train_dataset: Dataset, train_labels) -> Sampler or None:
+            Create a sampler based on the specified sampling strategy.
+    """
+
     @staticmethod
     def create_sampler(sampling: Sampling, train_dataset: Dataset, train_labels):
         """
@@ -151,6 +196,8 @@ class SamplerFactory:
 
 
 class ImagesDataModule(LightningDataModule):
+    """Implements a LightningDataModule from PyTorch Lightning for image datasets."""
+
     def __init__(
         self,
         dataset: str,
@@ -253,6 +300,10 @@ class ImagesDataModule(LightningDataModule):
 
 # CR Leaves specific data module
 class CRLeavesDataModule(ImagesDataModule):
+    """CRLeavesDataModule class for loading the CRLeaves dataset.
+    Inherits from ImagesDataModule that implements a LightningDataModule for image datasets.
+    """
+
     def __init__(
         self,
         root_dir: str,
