@@ -1,64 +1,23 @@
-from torch import nn
 import torch
 import torchvision
-
-
-class VitModel(nn.Module):
-    def __init__(self, num_classes, device) -> None:
-        """
-        Initializes a Vision Transformer (ViT) model.
-
-        Args:
-            num_classes (int): The number of output classes.
-            device (torch.device): The device to run the model on.
-        """
-        super().__init__()
-        pretrained_vit_weights = torchvision.models.ViT_B_16_Weights.DEFAULT
-        self.vit = torchvision.models.vit_b_16(weights=pretrained_vit_weights).to(
-            device
-        )
-
-        # freeze the base parameters
-        for parameter in self.vit.parameters():
-            parameter.requires_grad = False
-        self.vit.heads = nn.Linear(in_features=768, out_features=num_classes).to(device)
-
-        self.transforms = pretrained_vit_weights.transforms()
-
-    def forward(self, x) -> torch.Tensor:
-        """
-        Forward pass of the ViT model.
-
-        Args:
-            x (torch.Tensor): The input tensor.
-
-        Returns:
-            torch.Tensor: The output tensor.
-        """
-        return self.vit(x)
-
-
 from pytorch_lightning import LightningModule
-from torch.optim import AdamW, Adam
+from torch.optim import Adam
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
-
-class ViTLightningModule(LightningModule):
+class ConvolutionalLightningModule(LightningModule):
     """
     LightningModule implementation for the ViT (Vision Transformer) model.
 
     Args:
-        num_classes (int): Number of output classes.
+        conv_model: Model instance representing the Convolution Network Model.
         loss_fn: Loss function used for training.
         metrics: Metrics used for evaluation.
-        device: Device to run the model on.
         lr (float): Learning rate for the optimizer.
         scheduler_max_it (int): Maximum number of iterations for the learning rate scheduler.
         weight_decay (float): Weight decay for the optimizer.
-        epsilon (float): Epsilon value for numerical stability.
 
     Attributes:
-        vit: ViTModel instance representing the Vision Transformer model.
+        model: Model instance representing the Convolution Network Model.
         loss_fn: Loss function used for training.
         train_metrics: Metrics used for training evaluation.
         val_metrics: Metrics used for validation evaluation.
@@ -66,19 +25,17 @@ class ViTLightningModule(LightningModule):
         lr (float): Learning rate for the optimizer.
         scheduler_max_it (int): Maximum number of iterations for the learning rate scheduler.
     """
-
     def __init__(
         self,
-        num_classes,
+        conv_model,
         loss_fn,
         metrics,
-        device,
         lr,
         scheduler_max_it,
         weight_decay=0,
     ):
         super().__init__()
-        self.vit = VitModel(num_classes, device)
+        self.model = conv_model
         self.loss_fn = loss_fn
         self.train_metrics = metrics.clone(prefix="train/")
         self.val_metrics = metrics.clone(prefix="val/")
@@ -89,7 +46,7 @@ class ViTLightningModule(LightningModule):
 
     def forward(self, X):
         """
-        Forward pass of the ViT model.
+        Forward pass of the Convolutional model.
 
         Args:
             X: Input tensor.
@@ -97,7 +54,7 @@ class ViTLightningModule(LightningModule):
         Returns:
             Output tensor.
         """
-        outputs = self.vit(X)
+        outputs = self.model(X)
         return outputs
 
     def _common_step(self, batch, batch_idx):
@@ -210,42 +167,34 @@ class ViTLightningModule(LightningModule):
         Returns:
             Tuple containing the optimizer and learning rate scheduler.
         """
-        optimizer = Adam(
-            self.vit.parameters(), lr=self.lr
-        )
+        optimizer = Adam(self.model.parameters(), lr=self.lr)
         scheduler = CosineAnnealingLR(optimizer, T_max=self.scheduler_max_it)
         return [optimizer], [scheduler]
 
 
-from torchvision import transforms
-from torchvision.transforms import InterpolationMode
-
-
-def get_vit_model_transformations() -> tuple[transforms.Compose]:
-    """
-    Returns the train and test transformations for the VIT model.
-    Values are taking from the tranformation originally made by the VIT model.
-
-    Returns:
-        tuple[transforms.Compose]: A tuple containing the train and test transformations.
-    """
-    train_transform = transforms.Compose(
+def get_conv_model_transformations() -> tuple[torchvision.transforms.Compose]:
+    train_transform = torchvision.transforms.Compose(
         [
-            transforms.Resize(256, interpolation=InterpolationMode.BILINEAR),
-            transforms.RandomCrop(224),
-            transforms.RandomHorizontalFlip(),
-            transforms.RandomVerticalFlip(),
-            transforms.RandomRotation(45),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            torchvision.transforms.Resize(232),
+            torchvision.transforms.CenterCrop(224),
+            torchvision.transforms.RandomHorizontalFlip(),
+            torchvision.transforms.RandomVerticalFlip(),
+            torchvision.transforms.RandomRotation(45),
+            torchvision.transforms.ToTensor(),
+            torchvision.transforms.Normalize(
+                [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
+            ),
         ]
     )
-    test_transform = transforms.Compose(
+
+    test_transform = torchvision.transforms.Compose(
         [
-            transforms.Resize(256, interpolation=InterpolationMode.BILINEAR),
-            transforms.CenterCrop(224),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            torchvision.transforms.Resize(232),
+            torchvision.transforms.CenterCrop(224),
+            torchvision.transforms.ToTensor(),
+            torchvision.transforms.Normalize(
+                [0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
+            ),
         ]
     )
     return train_transform, test_transform

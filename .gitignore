@@ -6,3 +6,7 @@ __pycache__/data_preprocessing.cpython-312.pyc
 /wandb
 /CR_Leaves
 /__pycache__
+conv/__pycache__/conv_module.cpython-312.pyc
+conv/__pycache__/convnext.cpython-312.pyc
+conv/__pycache__/efficientnet.cpython-312.pyc
+conv/__pycache__/resnet.cpython-312.pyc

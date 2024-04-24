@@ -1,9 +1,17 @@
 def main():
+    import os
+    import sys
+    import inspect
+
+    currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+    parentdir = os.path.dirname(currentdir)
+    sys.path.insert(0, parentdir)
+
     import torch
     from pytorch_lightning.loggers import WandbLogger
     from helper_functions import count_classes
 
-    from vit import ViTLightningModule, get_vit_model_transformations
+    from vit.vit_module import ViTLightningModule, get_vit_model_transformations
     from pytorch_lightning import Trainer
     from pytorch_lightning.callbacks import EarlyStopping, ModelSummary
     from data_modules import CRLeavesDataModule, Sampling
@@ -25,15 +33,17 @@ def main():
             "BalancedAccuracy": MulticlassAccuracy(num_classes=class_count),
         }
     )
+    from vit.vit_small import VitSmallModel
 
+    vit_small = VitSmallModel(class_count, device=device)
     model = ViTLightningModule(
-        num_classes=class_count,
+        vit_model=vit_small,
         loss_fn=nn.CrossEntropyLoss(),
         metrics=metrics,
-        device=device,
         lr=config.LR,
         scheduler_max_it=config.SCHEDULER_MAX_IT,
     )
+
     train_transform, test_transform = get_vit_model_transformations()
 
     cr_leaves_dm = CRLeavesDataModule(
@@ -51,16 +61,20 @@ def main():
     cr_leaves_dm.create_data_loaders()
 
     early_stop_callback = EarlyStopping(
-        monitor="val/loss", patience=config.PATIENCE, strict=False, verbose=False, mode="min"
+        monitor="val/loss",
+        patience=config.PATIENCE,
+        strict=False,
+        verbose=False,
+        mode="min",
     )
 
-    wandb_logger = WandbLogger(project="CR_Leaves", resume="allow")
+    wandb_logger = WandbLogger(project="CR_Leaves", id="vit_small" resume="allow")
 
     trainer = Trainer(
         logger=wandb_logger,
         callbacks=early_stop_callback,
         max_epochs=config.EPOCHS,
-        log_every_n_steps=1
+        log_every_n_steps=1,
     )
 
     trainer.fit(model, datamodule=cr_leaves_dm)
