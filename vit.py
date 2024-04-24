@@ -39,7 +39,7 @@ class VitModel(nn.Module):
 
 
 from pytorch_lightning import LightningModule
-from torch.optim import AdamW
+from torch.optim import AdamW, Adam
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
 
@@ -52,6 +52,10 @@ class ViTLightningModule(LightningModule):
         loss_fn: Loss function used for training.
         metrics: Metrics used for evaluation.
         device: Device to run the model on.
+        lr (float): Learning rate for the optimizer.
+        scheduler_max_it (int): Maximum number of iterations for the learning rate scheduler.
+        weight_decay (float): Weight decay for the optimizer.
+        epsilon (float): Epsilon value for numerical stability.
 
     Attributes:
         vit: ViTModel instance representing the Vision Transformer model.
@@ -59,15 +63,29 @@ class ViTLightningModule(LightningModule):
         train_metrics: Metrics used for training evaluation.
         val_metrics: Metrics used for validation evaluation.
         test_metrics: Metrics used for testing evaluation.
+        lr (float): Learning rate for the optimizer.
+        scheduler_max_it (int): Maximum number of iterations for the learning rate scheduler.
     """
 
-    def __init__(self, num_classes, loss_fn, metrics, device):
+    def __init__(
+        self,
+        num_classes,
+        loss_fn,
+        metrics,
+        device,
+        lr,
+        scheduler_max_it,
+        weight_decay=0,
+    ):
         super().__init__()
         self.vit = VitModel(num_classes, device)
         self.loss_fn = loss_fn
         self.train_metrics = metrics.clone(prefix="train/")
         self.val_metrics = metrics.clone(prefix="val/")
         self.test_metrics = metrics.clone(prefix="test/")
+        self.lr = lr
+        self.scheduler_max_it = scheduler_max_it
+        self.weight_decay = weight_decay
 
     def forward(self, X):
         """
@@ -192,8 +210,10 @@ class ViTLightningModule(LightningModule):
         Returns:
             Tuple containing the optimizer and learning rate scheduler.
         """
-        optimizer = AdamW(self.vit.parameters(), lr=0.001)
-        scheduler = CosineAnnealingLR(optimizer, T_max=30)
+        optimizer = Adam(
+            self.vit.parameters(), lr=self.lr
+        )
+        scheduler = CosineAnnealingLR(optimizer, T_max=self.scheduler_max_it)
         return [optimizer], [scheduler]
 
 

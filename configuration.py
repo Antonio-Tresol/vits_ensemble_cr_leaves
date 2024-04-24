@@ -1,0 +1,16 @@
+# models
+LR = 0.001
+SCHEDULER_MAX_IT = 30
+WEIGH_DECAY=1e-4
+EPSILON=1e-4
+
+# train loop
+BATCH_SIZE = 64
+TEST_SIZE = 0.5
+TRAIN_SIZE = 1 - TEST_SIZE
+EPOCHS = 30
+
+# callback
+PATIENCE = 3
+
+
