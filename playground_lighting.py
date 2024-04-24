@@ -38,7 +38,7 @@ def main():
         test_size=0.2,
         use_index=True,
         indices_dir="Indices/",
-        sampling=Sampling.SKLEARN,
+        sampling=Sampling.NONE,
         train_transform=model.vit.get_transforms(),
         test_transform=model.vit.get_transforms(),
     )
@@ -56,7 +56,7 @@ def main():
     trainer = Trainer(
         logger=wandb_logger,
         callbacks=early_stop_callback,
-        max_epochs=5,
+        max_epochs=30,
         log_every_n_steps=1,
     )
 
