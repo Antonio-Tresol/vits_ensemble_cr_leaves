@@ -76,6 +76,7 @@ def main():
         callbacks=early_stop_callback,
         max_epochs=config.EPOCHS,
         log_every_n_steps=1,
+        default_root_dir="checkpoints/resnet/"
     )
 
     trainer.fit(model, datamodule=cr_leaves_dm)

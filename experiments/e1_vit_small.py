@@ -30,7 +30,7 @@ def main():
     metrics = MetricCollection(
         {
             "Accuracy": MulticlassAccuracy(num_classes=class_count, average="micro"),
-            "BalancedAccuracy": MulticlassAccuracy(num_classes=class_count),
+            "BalancedAccuracy": MulticlassAccuracy(num_classes=class_count)
         }
     )
     from vit.vit_small import VitSmallModel
@@ -41,7 +41,7 @@ def main():
         loss_fn=nn.CrossEntropyLoss(),
         metrics=metrics,
         lr=config.LR,
-        scheduler_max_it=config.SCHEDULER_MAX_IT,
+        scheduler_max_it=config.SCHEDULER_MAX_IT
     )
 
     train_transform, test_transform = get_vit_model_transformations()
@@ -54,7 +54,7 @@ def main():
         indices_dir="Indices/",
         sampling=Sampling.NONE,
         train_transform=train_transform,
-        test_transform=test_transform,
+        test_transform=test_transform
     )
 
     cr_leaves_dm.prepare_data()
@@ -65,7 +65,7 @@ def main():
         patience=config.PATIENCE,
         strict=False,
         verbose=False,
-        mode="min",
+        mode="min"
     )
 
     wandb_logger = WandbLogger(project="CR_Leaves", id="vit_small" resume="allow")

@@ -4,7 +4,7 @@ import torch
 
 class EnsembleViTModule(LightningModule):
     """
-    LightningModule implementation for an ensemble ViT (Vision Transformer) model.
+    LightningModule implementation for an ensemble Convolution (Vision Transformer) model.
 
     Args:
         models (List[LightningModule]): A list of the meodels to ensemble.
@@ -48,9 +48,29 @@ class EnsembleViTModule(LightningModule):
         return logits
 
     def training_step(self, batch, batch_idx):
+        """
+        Training step.
+
+        Args:
+            batch: Input batch.
+            batch_idx: Index of the current batch.
+
+        Returns:
+            None.
+        """
         pass
 
     def test_step(self, batch, batch_idx):
+        """
+        Test step.
+
+        Args:
+            batch: Input batch.
+            batch_idx: Index of the current batch.
+
+        Returns:
+            Dictionary containing the loss value, ground truth labels, and predicted outputs.
+        """
         x, y = batch
         y_hat = self(x)
         y_hat = y_hat.argmax(dim=-1)
@@ -61,6 +81,10 @@ class EnsembleViTModule(LightningModule):
             preds=y_hat)
             
         self.log({"test/confusion_matrix": cm})
-
+        
     def on_test_epoch_end(self):
+        """
+        Callback function called at the end of each testing epoch.
+        Computes and logs the testing metrics.
+        """
         self.log_dict(self.test_metrics.compute(), on_step=False, on_epoch=True)
