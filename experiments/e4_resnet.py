@@ -3,16 +3,21 @@ def main():
     import sys
     import inspect
 
-    currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+    currentdir = os.path.dirname(
+        os.path.abspath(inspect.getfile(inspect.currentframe()))
+    )
     parentdir = os.path.dirname(currentdir)
     sys.path.insert(0, parentdir)
-    
+
     import torch
     from pytorch_lightning.loggers import WandbLogger
     from helper_functions import count_classes
 
-    from conv.conv_module import ConvolutionalLightningModule, get_conv_model_transformations
-    
+    from conv.conv_module import (
+        ConvolutionalLightningModule,
+        get_conv_model_transformations,
+    )
+    from pytorch_lightning.callbacks import ModelCheckpoint
     from pytorch_lightning import Trainer
     from pytorch_lightning.callbacks import EarlyStopping, ModelSummary
     from data_modules import CRLeavesDataModule, Sampling
@@ -68,15 +73,20 @@ def main():
         verbose=False,
         mode="min",
     )
-
+    checkpoint_callback = ModelCheckpoint(
+        monitor="val/loss",
+        dirpath="checkpoints/resnet/",
+        filename="resnet",
+        save_top_k=1,
+        mode="min",
+    )
     wandb_logger = WandbLogger(project="CR_Leaves", id="res_net_50", resume="allow")
 
     trainer = Trainer(
         logger=wandb_logger,
-        callbacks=early_stop_callback,
+        callbacks=[early_stop_callback, checkpoint_callback],
         max_epochs=config.EPOCHS,
         log_every_n_steps=1,
-        default_root_dir="checkpoints/resnet/"
     )
 
     trainer.fit(model, datamodule=cr_leaves_dm)

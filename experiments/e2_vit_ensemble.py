@@ -36,37 +36,43 @@ def main():
         }
     )
 
-    from vit.vit_small import VitSmallModel
-    from vit.vit_medium import VitMediumModel
+    from vit.vit_small_16 import VitSmallModel16
+    from vit.vit_small_32 import VitSmallModel32
+    from vit.vit_medium_32 import VitMediumModel32
     from vit.vit_huge import VitHugeModel
     from vit.vit_ensemble import EnsembleViTModule
+
     # define the models to ensemble
-    vit_small = VitSmallModel(class_count, device=device)
-    model_small = ViTLightningModule(
-        vit_model=vit_small,
+    vit_small_16 = VitSmallModel16(class_count, device=device)
+    model_small_16 = ViTLightningModule.load_from_checkpoint(
+        checkpoint_path="checkpoints/vit_small_16/vit_small_16.ckpt",
+        vit_model=vit_small_16,
+        lr=config.LR,
         loss_fn=nn.CrossEntropyLoss(),
         metrics=metrics,
-        lr=config.LR,
         scheduler_max_it=config.SCHEDULER_MAX_IT,
-    )
+    ).vit
+        
+    vit_small_32 = VitSmallModel32(class_count, device=device)
+    model_small_32 = ViTLightningModule.load_from_checkpoint(
+        checkpoint_path="checkpoints/vit_small_32/vit_small_32.ckpt",
+        vit_model=vit_small_32,
+        lr=config.LR,
+        loss_fn=nn.CrossEntropyLoss(),
+        metrics=metrics,
+        scheduler_max_it=config.SCHEDULER_MAX_IT,
+    ).vit
 
-    vit_medium = VitMediumModel(class_count, device=device)
-    model_medium = ViTLightningModule(
-        vit_model=vit_medium,
+    vit_medium_32 = VitMediumModel32(class_count, device=device)
+    model_medium_32 = ViTLightningModule.load_from_checkpoint(
+        checkpoint_path="checkpoints/vit_medium_32/vit_medium_32.ckpt",
+        vit_model=vit_medium_32,
+        lr=config.LR,
         loss_fn=nn.CrossEntropyLoss(),
         metrics=metrics,
-        lr=config.LR,
         scheduler_max_it=config.SCHEDULER_MAX_IT,
-    )
+    ).vit
 
-    vit_huge = VitHugeModel(class_count, device=device)
-    model_large = ViTLightningModule(
-        vit_model=vit_huge,
-        loss_fn=nn.CrossEntropyLoss(),
-        metrics=metrics,
-        lr=config.LR,
-        scheduler_max_it=config.SCHEDULER_MAX_IT,
-    )
     # prepare the data
     train_transform, test_transform = get_vit_model_transformations()
     cr_leaves_dm = CRLeavesDataModule(
@@ -83,49 +89,8 @@ def main():
     cr_leaves_dm.prepare_data()
     cr_leaves_dm.create_data_loaders()
 
-    # train the models
-    early_stop_callback = EarlyStopping(
-        monitor="val/loss",
-        patience=config.PATIENCE,
-        strict=False,
-        verbose=False,
-        mode="min",
-    )
-    
-
-    # medium vit model training configuration
-    logger_vit_medium = WandbLogger(
-        project="CR_Leaves", id="vit_medium", resume="allow"
-    )
-    trainer_medium = Trainer(
-        logger=logger_vit_medium,
-        callbacks=early_stop_callback,
-        max_epochs=config.EPOCHS,
-        log_every_n_steps=1,
-    )
-    trainer_medium.fit(model_medium, datamodule=cr_leaves_dm)
-    # large vit model training configuration
-    logger_vit_large = WandbLogger(project="CR_Leaves", id="vit_large", resume="allow")
-    trainer_large = Trainer(
-        logger=logger_vit_large,
-        callbacks=early_stop_callback,
-        max_epochs=config.EPOCHS,
-        log_every_n_steps=1,
-    )
-    trainer_large.fit(model_large, datamodule=cr_leaves_dm)
-    # small vit model training configuration
-    logger_vit_small = WandbLogger(project="CR_Leaves", id="vit_small", resume="allow")
-    trainer_small = Trainer(
-        logger=logger_vit_small,
-        callbacks=early_stop_callback,
-        max_epochs=config.EPOCHS,
-        log_every_n_steps=1,
-    )
-    trainer_small.fit(model_small, datamodule=cr_leaves_dm)
-    
-
     ensemble_vit = EnsembleViTModule(
-        models=[model_small, model_medium, model_large],
+        models=[model_small_16, model_small_32, model_medium_32],
         metrics=metrics,
     )
 
@@ -135,10 +100,10 @@ def main():
     )
     trainer_ensemble = Trainer(
         logger=logger_vit_ensemble,
-        callbacks=early_stop_callback,
         max_epochs=config.EPOCHS,
         log_every_n_steps=1,
-    ) 
+    )
+
     trainer_ensemble.test(ensemble_vit, datamodule=cr_leaves_dm)
     wandb.finish()
 

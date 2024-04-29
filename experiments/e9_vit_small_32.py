@@ -13,6 +13,7 @@ def main():
     from pytorch_lightning.loggers import WandbLogger
     from helper_functions import count_classes
 
+    from pytorch_lightning.callbacks import ModelCheckpoint
     from vit.vit_module import ViTLightningModule, get_vit_model_transformations
     from pytorch_lightning import Trainer
     from pytorch_lightning.callbacks import EarlyStopping, ModelSummary
@@ -35,21 +36,19 @@ def main():
             "BalancedAccuracy": MulticlassAccuracy(num_classes=class_count),
         }
     )
+    from vit.vit_small_32 import VitSmallModel32
 
-    from vit.vit_medium import VitMediumModel
-    # define the models to ensemble
-   
-    vit_medium = VitMediumModel(class_count, device=device)
-    model_medium = ViTLightningModule(
-        vit_model=vit_medium,
+    vit_small = VitSmallModel32(class_count, device=device)
+    model = ViTLightningModule(
+        vit_model=vit_small,
         loss_fn=nn.CrossEntropyLoss(),
         metrics=metrics,
         lr=config.LR,
         scheduler_max_it=config.SCHEDULER_MAX_IT,
     )
 
-    # prepare the data
     train_transform, test_transform = get_vit_model_transformations()
+
     cr_leaves_dm = CRLeavesDataModule(
         root_dir=root_dir,
         batch_size=config.BATCH_SIZE,
@@ -64,7 +63,6 @@ def main():
     cr_leaves_dm.prepare_data()
     cr_leaves_dm.create_data_loaders()
 
-    # train the models
     early_stop_callback = EarlyStopping(
         monitor="val/loss",
         patience=config.PATIENCE,
@@ -72,21 +70,30 @@ def main():
         verbose=False,
         mode="min",
     )
-    
 
-    # medium vit model training configuration
-    logger_vit_medium = WandbLogger(
-        project="CR_Leaves", id="vit_medium", resume="allow"
+    checkpoint_callback = ModelCheckpoint(
+        monitor="val/loss",
+        dirpath="checkpoints/vit_small_32/",
+        filename="vit_small_32",
+        save_top_k=1,
+        mode="min",
     )
-    trainer_medium = Trainer(
-        logger=logger_vit_medium,
-        callbacks=early_stop_callback,
+
+    rand_id = wandb.util.generate_id()
+    rand_id = "vit_small_32_" + rand_id
+    wandb_logger = WandbLogger(project="CR_Leaves", id=rand_id, resume="allow")
+
+    trainer = Trainer(
+        logger=wandb_logger,
+        callbacks=[early_stop_callback, checkpoint_callback],
         max_epochs=config.EPOCHS,
         log_every_n_steps=1,
-        default_root_dir="checkpoints/vit_medium/",
     )
-    trainer_medium.fit(model_medium, datamodule=cr_leaves_dm)
-    
+
+    trainer.fit(model, datamodule=cr_leaves_dm)
+    trainer.test(model, datamodule=cr_leaves_dm)
+
+    wandb.finish()
 
 
 if __name__ == "__main__":

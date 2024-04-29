@@ -2,6 +2,7 @@ import torch
 from pytorch_lightning import LightningModule
 from torch.optim import Adam
 from torch.optim.lr_scheduler import CosineAnnealingLR
+import configuration as config
 
 
 class ViTLightningModule(LightningModule):
