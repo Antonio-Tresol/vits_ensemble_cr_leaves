@@ -2,13 +2,17 @@
 
 # System
 import os
+
 # Torch
 from torch.utils.data import Dataset
+
 # Utils
 from collections import defaultdict
 from typing import List, Tuple
+
 # Images
 from PIL import Image
+
 
 # Utility class for scanning a folder contents
 class FolderScanner:
@@ -26,15 +30,20 @@ class FolderScanner:
         folder_counts = {}
         for folder in os.scandir(root_dir):
             if folder.is_dir():
-                folder_counts[folder.name] = sum(1 for _ in os.scandir(folder) if _.is_file())
-        
+                folder_counts[folder.name] = sum(
+                    1 for _ in os.scandir(folder) if _.is_file()
+                )
+
         # Sort folders based on file counts
         return sorted(folder_counts, key=folder_counts.get)
+
 
 # Utility class for building images and labels lists
 class ImageListBuilder:
     @staticmethod
-    def build_list(root_dir: str, folders: List[str]) -> Tuple[List[str], List[int], List[int]]:
+    def build_list(
+        root_dir: str, folders: List[str]
+    ) -> Tuple[List[str], List[int], List[int]]:
         """
         Build lists of image paths, corresponding labels, and class counts.
 
@@ -52,15 +61,18 @@ class ImageListBuilder:
         for i, folder in enumerate(folders):
             folder_path = os.path.join(root_dir, folder)
             classes[folder] = i
-            
+
             for image_name in os.scandir(folder_path):
-                if image_name.name.lower().endswith(("jpg", "jpeg", "png")) and image_name.is_file():
+                if (
+                    image_name.name.lower().endswith(("jpg", "jpeg", "png"))
+                    and image_name.is_file()
+                ):
                     images.append(os.path.join(folder_path, image_name.name))
                     labels.append(i)
                     class_counts[i] += 1
 
         return images, labels, list(class_counts.values()), classes
-    
+
 
 class ImageFolderDataset(Dataset):
     def __init__(self, root_dir: str, transform=None):
@@ -79,7 +91,9 @@ class ImageFolderDataset(Dataset):
         self.folders = FolderScanner.count_files(root_dir=self.root_dir)
 
         # Build lists of images, labels, and class counts
-        self.images, self.labels, self.class_counts, self.classes = ImageListBuilder.build_list(root_dir=self.root_dir, folders=self.folders)
+        self.images, self.labels, self.class_counts, self.classes = (
+            ImageListBuilder.build_list(root_dir=self.root_dir, folders=self.folders)
+        )
 
     def __len__(self):
         """

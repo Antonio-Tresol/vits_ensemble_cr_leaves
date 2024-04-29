@@ -2,6 +2,7 @@ import torchmetrics
 import torch
 import torch.nn.functional as F
 
+
 class MRR(torchmetrics.Metric):
     def __init__(self, dist_sync_on_step=False):
         super().__init__(dist_sync_on_step=dist_sync_on_step, full_state_update=False)
