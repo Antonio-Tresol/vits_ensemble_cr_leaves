@@ -58,7 +58,7 @@ def main():
         use_index=True,
         indices_dir="Indices/",
         sampling=Sampling.NONE,
-        train_transform=train_transform,
+        train_transform=test_transform,
         test_transform=test_transform,
     )
 
@@ -74,7 +74,7 @@ def main():
     )
     checkpoint_callback = ModelCheckpoint(
         monitor="val/loss",
-        dirpath="checkpoints/resnet/",
+        dirpath="checkpoints/efficientnet/",
         filename="efficientnet",
         save_top_k=1,
         mode="min",
@@ -86,7 +86,6 @@ def main():
         callbacks=[early_stop_callback, checkpoint_callback],
         max_epochs=config.EPOCHS,
         log_every_n_steps=1,
-        default_root_dir="checkpoints/efficientnet/",
     )
 
     trainer.fit(model, datamodule=cr_leaves_dm)

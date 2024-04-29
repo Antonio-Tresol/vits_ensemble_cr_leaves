@@ -39,7 +39,6 @@ def main():
     from vit.vit_small_16 import VitSmallModel16
     from vit.vit_small_32 import VitSmallModel32
     from vit.vit_medium_32 import VitMediumModel32
-    from vit.vit_huge import VitHugeModel
     from vit.vit_ensemble import EnsembleViTModule
 
     # define the models to ensemble
@@ -93,10 +92,11 @@ def main():
         models=[model_small_16, model_small_32, model_medium_32],
         metrics=metrics,
     )
-
+    rand_id = wandb.util.generate_id()
+    rand_id = "vit_ensemble_" + rand_id
     # test the ensemble model
     logger_vit_ensemble = WandbLogger(
-        project="CR_Leaves", id="vit_ensemble", resume="allow"
+        project="CR_Leaves", id=rand_id, resume="allow"
     )
     trainer_ensemble = Trainer(
         logger=logger_vit_ensemble,

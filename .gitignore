@@ -19,3 +19,4 @@ vit/__pycache__/vit_small.cpython-312.pyc
 vit/__pycache__/vit_medium_32.cpython-312.pyc
 vit/__pycache__/vit_small_16.cpython-312.pyc
 vit/__pycache__/vit_small_32.cpython-312.pyc
+conv/__pycache__/conv_ensemble.cpython-312.pyc

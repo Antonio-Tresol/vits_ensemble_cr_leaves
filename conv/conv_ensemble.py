@@ -2,7 +2,7 @@ from pytorch_lightning import LightningModule
 from torch import nn
 import torch
 
-class EnsembleViTModule(LightningModule):
+class EnsembleConvModule(LightningModule):
     """
     LightningModule implementation for an ensemble Convolution (Vision Transformer) model.
 
@@ -75,13 +75,7 @@ class EnsembleViTModule(LightningModule):
         y_hat = self(x)
         y_hat = y_hat.argmax(dim=-1)
         self.test_metrics.update(y_hat, y)
-        
-        cm = self.log.plot.confusion_matrix(
-            y_true=y,
-            preds=y_hat)
             
-        self.log({"test/confusion_matrix": cm})
-        
     def on_test_epoch_end(self):
         """
         Callback function called at the end of each testing epoch.
