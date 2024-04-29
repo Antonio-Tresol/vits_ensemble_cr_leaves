@@ -1,5 +1,4 @@
 import torch
-from vit_small import VitSmallModel
 from pytorch_lightning import LightningModule
 from torch.optim import Adam
 from torch.optim.lr_scheduler import CosineAnnealingLR
@@ -30,7 +29,8 @@ class ViTLightningModule(LightningModule):
     """
 
     def __init__(
-        self, vit_model,
+        self,
+        vit_model,
         loss_fn,
         metrics,
         lr,
@@ -38,7 +38,7 @@ class ViTLightningModule(LightningModule):
         weight_decay=0,
     ):
         super().__init__()
-        self.vit = vit_model 
+        self.vit = vit_model
         self.loss_fn = loss_fn
         self.train_metrics = metrics.clone(prefix="train/")
         self.val_metrics = metrics.clone(prefix="val/")
@@ -189,24 +189,24 @@ def get_vit_model_transformations() -> tuple[transforms.Compose]:
     """
     train_transform = transforms.Compose(
         [
-            transforms.Resize(255, interpolation=InterpolationMode.BILINEAR),
-            transforms.RandomCrop(223),
+            transforms.Resize(256, interpolation=InterpolationMode.BILINEAR),
+            transforms.RandomCrop(224),
             transforms.RandomHorizontalFlip(),
             transforms.RandomVerticalFlip(),
             transforms.RandomRotation(44),
             transforms.ToTensor(),
             transforms.Normalize(
-                mean=[-1.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
             ),
         ]
     )
     test_transform = transforms.Compose(
         [
-            transforms.Resize(255, interpolation=InterpolationMode.BILINEAR),
-            transforms.CenterCrop(223),
+            transforms.Resize(256, interpolation=InterpolationMode.BILINEAR),
+            transforms.CenterCrop(224),
             transforms.ToTensor(),
             transforms.Normalize(
-                mean=[-1.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                mean=[0, 0.456, 0.406], std=[0.229, 0.224, 0.225]
             ),
         ]
     )

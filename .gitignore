@@ -10,3 +10,8 @@ conv/__pycache__/conv_module.cpython-312.pyc
 conv/__pycache__/convnext.cpython-312.pyc
 conv/__pycache__/efficientnet.cpython-312.pyc
 conv/__pycache__/resnet.cpython-312.pyc
+vit/__pycache__/vit_ensemble.cpython-312.pyc
+vit/__pycache__/vit_huge.cpython-312.pyc
+vit/__pycache__/vit_medium.cpython-312.pyc
+vit/__pycache__/vit_module.cpython-312.pyc
+vit/__pycache__/vit_small.cpython-312.pyc

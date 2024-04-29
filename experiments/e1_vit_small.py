@@ -68,7 +68,7 @@ def main():
         mode="min"
     )
 
-    wandb_logger = WandbLogger(project="CR_Leaves", id="vit_small" resume="allow")
+    wandb_logger = WandbLogger(project="CR_Leaves", id="vit_small", resume="allow")
 
     trainer = Trainer(
         logger=wandb_logger,
