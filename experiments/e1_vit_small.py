@@ -53,7 +53,7 @@ def main():
         use_index=True,
         indices_dir="Indices/",
         sampling=Sampling.NONE,
-        train_transform=train_transform,
+        train_transform=test_transform,
         test_transform=test_transform
     )
 
@@ -75,6 +75,7 @@ def main():
         callbacks=early_stop_callback,
         max_epochs=config.EPOCHS,
         log_every_n_steps=1,
+        default_root_dir="checkpoints/vit_small/"
     )
 
     trainer.fit(model, datamodule=cr_leaves_dm)

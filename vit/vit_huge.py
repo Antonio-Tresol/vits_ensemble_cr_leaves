@@ -20,7 +20,7 @@ class VitHugeModel(nn.Module):
         # freeze the base parameters
         for parameter in self.vit.parameters():
             parameter.requires_grad = False
-        self.vit.heads = nn.Linear(in_features=768, out_features=num_classes).to(device)
+        self.vit.heads = nn.Linear(in_features=1280, out_features=num_classes).to(device)
 
         self.transforms = pretrained_vit_weights.transforms()
 

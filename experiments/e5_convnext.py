@@ -53,7 +53,7 @@ def main():
         use_index=True,
         indices_dir="Indices/",
         sampling=Sampling.NONE,
-        train_transform=train_transform,
+        train_transform=test_transform,
         test_transform=test_transform,
     )
 

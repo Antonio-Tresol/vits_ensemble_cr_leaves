@@ -36,29 +36,8 @@ def main():
         }
     )
 
-    from vit.vit_small import VitSmallModel
-    from vit.vit_medium import VitMediumModel
     from vit.vit_huge import VitHugeModel
-    from vit.vit_ensemble import EnsembleViTModule
-    # define the models to ensemble
-    vit_small = VitSmallModel(class_count, device=device)
-    model_small = ViTLightningModule(
-        vit_model=vit_small,
-        loss_fn=nn.CrossEntropyLoss(),
-        metrics=metrics,
-        lr=config.LR,
-        scheduler_max_it=config.SCHEDULER_MAX_IT,
-    )
-
-    vit_medium = VitMediumModel(class_count, device=device)
-    model_medium = ViTLightningModule(
-        vit_model=vit_medium,
-        loss_fn=nn.CrossEntropyLoss(),
-        metrics=metrics,
-        lr=config.LR,
-        scheduler_max_it=config.SCHEDULER_MAX_IT,
-    )
-
+    
     vit_huge = VitHugeModel(class_count, device=device)
     model_large = ViTLightningModule(
         vit_model=vit_huge,
@@ -91,55 +70,17 @@ def main():
         verbose=False,
         mode="min",
     )
-    
-
-    # medium vit model training configuration
-    logger_vit_medium = WandbLogger(
-        project="CR_Leaves", id="vit_medium", resume="allow"
-    )
-    trainer_medium = Trainer(
-        logger=logger_vit_medium,
-        callbacks=early_stop_callback,
-        max_epochs=config.EPOCHS,
-        log_every_n_steps=1,
-    )
-    trainer_medium.fit(model_medium, datamodule=cr_leaves_dm)
-    # large vit model training configuration
+   # large vit model training configuration
     logger_vit_large = WandbLogger(project="CR_Leaves", id="vit_large", resume="allow")
     trainer_large = Trainer(
         logger=logger_vit_large,
         callbacks=early_stop_callback,
         max_epochs=config.EPOCHS,
         log_every_n_steps=1,
+        default_root_dir="checkpoints/vit_huge/",
     )
     trainer_large.fit(model_large, datamodule=cr_leaves_dm)
-    # small vit model training configuration
-    logger_vit_small = WandbLogger(project="CR_Leaves", id="vit_small", resume="allow")
-    trainer_small = Trainer(
-        logger=logger_vit_small,
-        callbacks=early_stop_callback,
-        max_epochs=config.EPOCHS,
-        log_every_n_steps=1,
-    )
-    trainer_small.fit(model_small, datamodule=cr_leaves_dm)
-    
-
-    ensemble_vit = EnsembleViTModule(
-        models=[model_small, model_medium, model_large],
-        metrics=metrics,
-    )
-
-    # test the ensemble model
-    logger_vit_ensemble = WandbLogger(
-        project="CR_Leaves", id="vit_ensemble", resume="allow"
-    )
-    trainer_ensemble = Trainer(
-        logger=logger_vit_ensemble,
-        callbacks=early_stop_callback,
-        max_epochs=config.EPOCHS,
-        log_every_n_steps=1,
-    ) 
-    trainer_ensemble.test(ensemble_vit, datamodule=cr_leaves_dm)
+   
     wandb.finish()
 
 
