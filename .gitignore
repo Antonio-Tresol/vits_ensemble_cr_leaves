@@ -1,10 +1,9 @@
-/CRLeaves
 __pycache__/data_preprocessing.cpython-312.pyc
 /going_modular
-/Indices
 /lightning_logs
 /wandb
 /CR_Leaves
+/CRLeaves
 /__pycache__
 conv/__pycache__/conv_module.cpython-312.pyc
 conv/__pycache__/convnext.cpython-312.pyc
@@ -15,7 +14,6 @@ vit/__pycache__/vit_huge.cpython-312.pyc
 vit/__pycache__/vit_medium.cpython-312.pyc
 vit/__pycache__/vit_module.cpython-312.pyc
 vit/__pycache__/vit_small.cpython-312.pyc
-/checkpoints
 vit/__pycache__/vit_medium_32.cpython-312.pyc
 vit/__pycache__/vit_small_16.cpython-312.pyc
 vit/__pycache__/vit_small_32.cpython-312.pyc
@@ -23,3 +21,12 @@ conv/__pycache__/conv_ensemble.cpython-312.pyc
 vit/__pycache__/trying_vit.cpython-312.pyc
 vit/__pycache__/vit_base_16.cpython-312.pyc
 vit/__pycache__/vit_base_32.cpython-312.pyc
+checkpoints/deit3_base_16/deit3_base_16_0.ckpt
+checkpoints/deit3_base_16/deit3_base_16_1.ckpt
+checkpoints/vit_base_16/vit_base_16_0.ckpt
+checkpoints/vit_base_16/vit_base_16_1.ckpt
+checkpoints/vit_base_32/vit_base_32_0.ckpt
+checkpoints/vit_base_32/vit_base_32_1.ckpt
+checkpoints/vit_large_32/vit_large_32_0.ckpt
+checkpoints/vit_large_32/vit_large_32_1.ckpt
+Indices/CRLeaves.pkl

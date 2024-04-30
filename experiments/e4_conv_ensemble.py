@@ -57,9 +57,12 @@ def main():
     cr_leaves_dm.prepare_data()
     cr_leaves_dm.create_data_loaders()
 
+    metrics = []
     for i in range(config.NUM_TRIALS):
         # define the models to ensemble
-        checkpoint_path = config.CONVNEXT_FILENAME + str(i) + ".ckpt"
+        checkpoint_path = (
+            config.RESNET_DIR + config.CONVNEXT_FILENAME + str(i) + ".ckpt"
+        )
         resnet = ResNet50(class_count, device=device)
         resnet = ConvolutionalLightningModule.load_from_checkpoint(
             checkpoint_path=checkpoint_path,
@@ -70,7 +73,9 @@ def main():
             scheduler_max_it=config.SCHEDULER_MAX_IT,
         ).model
 
-        checkpoint_path = config.CONVNEXT_FILENAME + str(i) + ".ckpt"
+        checkpoint_path = (
+            config.CONVNEXT_DIR + config.CONVNEXT_FILENAME + str(i) + ".ckpt"
+        )
         convnet = ConvNext(class_count, device=device)
         convnet = ConvolutionalLightningModule.load_from_checkpoint(
             checkpoint_path=checkpoint_path,
@@ -81,7 +86,9 @@ def main():
             scheduler_max_it=config.SCHEDULER_MAX_IT,
         ).model
 
-        checkpoint_path = config.EFFICIENTNET_FILENAME + str(i) + ".ckpt"
+        checkpoint_path = (
+            config.EFFICIENTNET_DIR + config.EFFICIENTNET_FILENAME + str(i) + ".ckpt"
+        )
         efficientnet = EfficientNetB4(class_count, device=device)
         efficientnet = ConvolutionalLightningModule.load_from_checkpoint(
             checkpoint_path=checkpoint_path,
@@ -109,8 +116,10 @@ def main():
             log_every_n_steps=1,
         )
 
-        trainer_ensemble.test(ensemble_conv, datamodule=cr_leaves_dm)
-    wandb.finish()
+        metrics.append(trainer_ensemble.test(ensemble_conv, datamodule=cr_leaves_dm))
+        wandb.finish()
+
+    pd.DataFrame(metrics).to_csv("conv_ensemble_metrics.csv", index=False)
 
 
 if __name__ == "__main__":

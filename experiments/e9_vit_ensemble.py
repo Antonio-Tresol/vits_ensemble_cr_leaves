@@ -60,7 +60,9 @@ def main():
     for i in range(config.NUM_TRIALS):
         # define the models to ensemble
         vit_base_16 = VitBase16(class_count, device=device)
-        checkpoint_filename = config.VIT_BASE_16_FILENAME + str(i) + ".ckpt"
+        checkpoint_filename = (
+            config.VIT_BASE_16_DIR + config.VIT_BASE_16_FILENAME + str(i) + ".ckpt"
+        )
         vit_base_16 = ViTLightningModule.load_from_checkpoint(
             checkpoint_path=checkpoint_filename,
             vit_model=vit_base_16,
@@ -71,7 +73,9 @@ def main():
         ).vit
 
         deit_base_16 = Deit3Base16(class_count, device=device)
-        checkpoint_filename = config.DEIT3_BASE_16_FILENAME + str(i) + ".ckpt"
+        checkpoint_filename = (
+            config.DEIT3_BASE_16_DIR + config.DEIT3_BASE_16_FILENAME + str(i) + ".ckpt"
+        )
         deit_base_16 = ViTLightningModule.load_from_checkpoint(
             checkpoint_path=checkpoint_filename,
             vit_model=deit_base_16,
@@ -81,7 +85,9 @@ def main():
             scheduler_max_it=config.SCHEDULER_MAX_IT,
         ).vit
 
-        checkpoint_filename = config.VIT_BASE_32_FILENAME + str(i) + ".ckpt"
+        checkpoint_filename = (
+            config.VIT_BASE_32_DIR + config.VIT_BASE_32_FILENAME + str(i) + ".ckpt"
+        )
         vit_base_32 = VitBase32(class_count, device=device)
         vit_base_32 = ViTLightningModule.load_from_checkpoint(
             checkpoint_path=checkpoint_filename,
@@ -110,8 +116,7 @@ def main():
         )
 
         trainer_ensemble.test(ensemble_vit, datamodule=cr_leaves_dm)
-
-    wandb.finish()
+        wandb.finish()
 
 
 if __name__ == "__main__":

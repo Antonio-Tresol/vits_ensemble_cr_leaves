@@ -8,6 +8,8 @@ def main():
     )
     parentdir = os.path.dirname(currentdir)
     sys.path.insert(0, parentdir)
+
+    import pandas as pd
     import torch
     from pytorch_lightning.loggers import WandbLogger
     from helper_functions import count_classes
@@ -37,6 +39,7 @@ def main():
             "BalancedAccuracy": MulticlassAccuracy(num_classes=class_count),
         }
     )
+
     from conv.efficientnet import EfficientNetB4
 
     efficientNet = EfficientNetB4(num_classes=class_count, device=device)
@@ -64,6 +67,7 @@ def main():
     cr_leaves_dm.prepare_data()
     cr_leaves_dm.create_data_loaders()
 
+    metrics = []
     for i in range(config.NUM_TRIALS):
 
         early_stop_callback = EarlyStopping(
@@ -93,9 +97,10 @@ def main():
         )
 
         trainer.fit(model, datamodule=cr_leaves_dm)
-        trainer.test(model, datamodule=cr_leaves_dm)
+        metrics.append(trainer.test(model, datamodule=cr_leaves_dm))
+        wandb.finish()
 
-    wandb.finish()
+    pd.DataFrame(metrics).to_csv(config.EFFICIENTNET_CSV_FILENAME, index=False)
 
 
 if __name__ == "__main__":

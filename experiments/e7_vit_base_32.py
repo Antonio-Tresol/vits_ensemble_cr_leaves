@@ -94,8 +94,7 @@ def main():
 
         trainer.fit(model, datamodule=cr_leaves_dm)
         trainer.test(model, datamodule=cr_leaves_dm)
-
-    wandb.finish()
+        wandb.finish()
 
 
 if __name__ == "__main__":

@@ -83,7 +83,7 @@ def main():
         )
 
         id = config.DEIT3_BASE_16_FILENAME + str(i)
-        wandb_logger = WandbLogger(project=config.WAND_PROJECT, id=id, resume="allow")
+        wandb_logger = WandbLogger(project=config.WANDB_PROJECT, id=id, resume="allow")
 
         trainer = Trainer(
             logger=wandb_logger,
@@ -94,8 +94,7 @@ def main():
 
         trainer.fit(model, datamodule=cr_leaves_dm)
         trainer.test(model, datamodule=cr_leaves_dm)
-
-    wandb.finish()
+        wandb.finish()
 
 
 if __name__ == "__main__":

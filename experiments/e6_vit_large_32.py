@@ -96,8 +96,7 @@ def main():
 
         trainer_medium.fit(model_large_32, datamodule=cr_leaves_dm)
         trainer_medium.test(model_large_32, datamodule=cr_leaves_dm)
-
-    wandb.finish()
+        wandb.finish()
 
 
 if __name__ == "__main__":

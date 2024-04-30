@@ -9,6 +9,7 @@ def main():
     parentdir = os.path.dirname(currentdir)
     sys.path.insert(0, parentdir)
 
+    import pandas as pd
     import torch
     from pytorch_lightning.loggers import WandbLogger
     from helper_functions import count_classes
@@ -38,6 +39,18 @@ def main():
             "BalancedAccuracy": MulticlassAccuracy(num_classes=class_count),
         }
     )
+
+    from conv.resnet import ResNet50
+
+    resnet = ResNet50(num_classes=class_count, device=device)
+    model = ConvolutionalLightningModule(
+        conv_model=resnet,
+        loss_fn=nn.CrossEntropyLoss(),
+        metrics=metrics,
+        lr=config.LR,
+        scheduler_max_it=config.SCHEDULER_MAX_IT,
+    )
+
     train_transform, test_transform = get_conv_model_transformations()
 
     cr_leaves_dm = CRLeavesDataModule(
@@ -54,18 +67,8 @@ def main():
     cr_leaves_dm.prepare_data()
     cr_leaves_dm.create_data_loaders()
 
-    from conv.resnet import ResNet50
-
+    metrics = []
     for i in range(config.NUM_TRIALS):
-
-        resnet = ResNet50(num_classes=class_count, device=device)
-        model = ConvolutionalLightningModule(
-            conv_model=resnet,
-            loss_fn=nn.CrossEntropyLoss(),
-            metrics=metrics,
-            lr=config.LR,
-            scheduler_max_it=config.SCHEDULER_MAX_IT,
-        )
 
         early_stop_callback = EarlyStopping(
             monitor="val/loss",
@@ -93,9 +96,10 @@ def main():
         )
 
         trainer.fit(model, datamodule=cr_leaves_dm)
-        trainer.test(model, datamodule=cr_leaves_dm)
+        metrics.append(trainer.test(model, datamodule=cr_leaves_dm))
+        wandb.finish()
 
-    wandb.finish()
+    pd.DataFrame(metrics).to_csv(config.RESNET_CSV_FILENAME, index=False)
 
 
 if __name__ == "__main__":
