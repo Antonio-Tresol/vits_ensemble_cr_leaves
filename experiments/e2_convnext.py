@@ -66,8 +66,7 @@ def main():
     cr_leaves_dm.prepare_data()
     cr_leaves_dm.create_data_loaders()
 
-    metrics = []
-
+    metrics_data = []
     for i in range(config.NUM_TRIALS):
 
         early_stop_callback = EarlyStopping(
@@ -86,7 +85,7 @@ def main():
         )
 
         id = config.CONVNEXT_FILENAME + str(i)
-        wandb_logger = WandbLogger(project=config.WAND_PROJECT, id=id, resume="allow")
+        wandb_logger = WandbLogger(project=config.WANDB_PROJECT, id=id, resume="allow")
 
         trainer = Trainer(
             logger=wandb_logger,
@@ -96,10 +95,10 @@ def main():
         )
 
         trainer.fit(model, datamodule=cr_leaves_dm)
-        metrics.append(trainer.test(model, datamodule=cr_leaves_dm))
+        metrics_data.append(trainer.test(model, datamodule=cr_leaves_dm)[0])
         wandb.finish()
 
-    pd.DataFrame(metrics).to_csv(config.CONVNEXT_CSV_FILENAME, index=False)
+    pd.DataFrame(metrics_data).to_csv(config.CONVNEXT_CSV_FILENAME, index=False)
 
 
 if __name__ == "__main__":

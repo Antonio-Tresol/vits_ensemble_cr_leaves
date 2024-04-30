@@ -9,6 +9,7 @@ def main():
     parentdir = os.path.dirname(currentdir)
     sys.path.insert(0, parentdir)
 
+    import pandas as pd
     import torch
     from pytorch_lightning.loggers import WandbLogger
     from helper_functions import count_classes
@@ -54,6 +55,7 @@ def main():
 
     from vit.vit_base_32 import VitBase32
 
+    metrics_data = []
     for i in range(config.NUM_TRIALS):
 
         vit_small = VitBase32(class_count, device=device)
@@ -93,8 +95,10 @@ def main():
         )
 
         trainer.fit(model, datamodule=cr_leaves_dm)
-        trainer.test(model, datamodule=cr_leaves_dm)
+        metrics_data.append(trainer.test(model, datamodule=cr_leaves_dm)[0])
         wandb.finish()
+
+    pd.DataFrame(metrics_data).to_csv(config.VIT_BASE_32_CSV_FILENAME, index=False)
 
 
 if __name__ == "__main__":

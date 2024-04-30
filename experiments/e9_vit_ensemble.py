@@ -9,6 +9,7 @@ def main():
     parentdir = os.path.dirname(currentdir)
     sys.path.insert(0, parentdir)
 
+    import pandas as pd
     import torch
     from pytorch_lightning.loggers import WandbLogger
     from helper_functions import count_classes
@@ -57,6 +58,7 @@ def main():
     from vit.vit_ensemble import EnsembleViTModule
     from vit.deit3_base_16 import Deit3Base16
 
+    metrics_data = []
     for i in range(config.NUM_TRIALS):
         # define the models to ensemble
         vit_base_16 = VitBase16(class_count, device=device)
@@ -115,8 +117,12 @@ def main():
             log_every_n_steps=1,
         )
 
-        trainer_ensemble.test(ensemble_vit, datamodule=cr_leaves_dm)
+        metrics_data.append(
+            trainer_ensemble.test(ensemble_vit, datamodule=cr_leaves_dm)[0]
+        )
         wandb.finish()
+
+    pd.DataFrame(metrics_data).to_csv(config.VIT_ENSEMBLE_CSV_FILENAME, index=False)
 
 
 if __name__ == "__main__":

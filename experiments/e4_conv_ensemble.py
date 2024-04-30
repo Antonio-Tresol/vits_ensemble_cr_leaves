@@ -9,6 +9,7 @@ def main():
     parentdir = os.path.dirname(currentdir)
     sys.path.insert(0, parentdir)
 
+    import pandas as pd
     import torch
     from pytorch_lightning.loggers import WandbLogger
     from helper_functions import count_classes
@@ -57,12 +58,10 @@ def main():
     cr_leaves_dm.prepare_data()
     cr_leaves_dm.create_data_loaders()
 
-    metrics = []
+    metrics_data = []
     for i in range(config.NUM_TRIALS):
         # define the models to ensemble
-        checkpoint_path = (
-            config.RESNET_DIR + config.CONVNEXT_FILENAME + str(i) + ".ckpt"
-        )
+        checkpoint_path = config.RESNET_DIR + config.RESNET_FILENAME + str(i) + ".ckpt"
         resnet = ResNet50(class_count, device=device)
         resnet = ConvolutionalLightningModule.load_from_checkpoint(
             checkpoint_path=checkpoint_path,
@@ -104,10 +103,10 @@ def main():
             metrics=metrics,
         )
 
-        id = "conv_ensemble_" + str(i)
+        id = config.CONV_ENSEMBLE_FILENAME + str(i)
         # test the ensemble model
         logger_conv_ensemble = WandbLogger(
-            project=config.WAND_PROJECT, id=id, resume="allow"
+            project=config.WANDB_PROJECT, id=id, resume="allow"
         )
 
         trainer_ensemble = Trainer(
@@ -116,10 +115,12 @@ def main():
             log_every_n_steps=1,
         )
 
-        metrics.append(trainer_ensemble.test(ensemble_conv, datamodule=cr_leaves_dm))
+        metrics_data.append(
+            trainer_ensemble.test(ensemble_conv, datamodule=cr_leaves_dm)[0]
+        )
         wandb.finish()
 
-    pd.DataFrame(metrics).to_csv("conv_ensemble_metrics.csv", index=False)
+    pd.DataFrame(metrics_data).to_csv(config.CONV_ENSEMBLE_CSV_FILENAME, index=False)
 
 
 if __name__ == "__main__":

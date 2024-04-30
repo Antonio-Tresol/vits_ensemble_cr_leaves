@@ -15,7 +15,7 @@ def main():
     import torch
     from pytorch_lightning.loggers import WandbLogger
     from helper_functions import count_classes
-
+    import pandas as pd
     from pytorch_lightning.callbacks import ModelCheckpoint
     from vit.vit_module import ViTLightningModule, get_vit_model_transformations
     from pytorch_lightning import Trainer
@@ -58,7 +58,7 @@ def main():
 
     cr_leaves_dm.prepare_data()
     cr_leaves_dm.create_data_loaders()
-
+    metrics_data = []
     for i in range(config.NUM_TRIALS):
         early_stop_callback = EarlyStopping(
             monitor="val/loss",
@@ -93,8 +93,11 @@ def main():
         )
 
         trainer.fit(model, datamodule=cr_leaves_dm)
-        trainer.test(model, datamodule=cr_leaves_dm)
+        metrics_data.append(trainer.test(model, datamodule=cr_leaves_dm)[0])
         wandb.finish()
+    pd.DataFrame(metrics_data).to_csv(
+        config.DEIT3_BASE_16_CSV_FILENAME + "metrics.csv", index=False
+    )
 
 
 if __name__ == "__main__":

@@ -10,6 +10,7 @@ def main():
     sys.path.insert(0, parentdir)
 
     import torch
+    import pandas as pd
     from pytorch_lightning.loggers import WandbLogger
     from helper_functions import count_classes
     from pytorch_lightning.callbacks import ModelCheckpoint
@@ -54,6 +55,7 @@ def main():
 
     from vit.vit_large_32 import VitLarge32
 
+    metrics_data = []
     for i in range(config.NUM_TRIALS):
 
         vit_medium = VitLarge32(class_count, device=device)
@@ -95,8 +97,11 @@ def main():
         )
 
         trainer_medium.fit(model_large_32, datamodule=cr_leaves_dm)
-        trainer_medium.test(model_large_32, datamodule=cr_leaves_dm)
+        metrics_data.append(
+            trainer_medium.test(model_large_32, datamodule=cr_leaves_dm)[0]
+        )
         wandb.finish()
+    pd.DataFrame(metrics_data).to_csv(config.VIT_LARGE_32_CSV_FILENAME, index=False)
 
 
 if __name__ == "__main__":

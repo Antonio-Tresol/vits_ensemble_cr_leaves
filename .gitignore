@@ -30,3 +30,9 @@ checkpoints/vit_base_32/vit_base_32_1.ckpt
 checkpoints/vit_large_32/vit_large_32_0.ckpt
 checkpoints/vit_large_32/vit_large_32_1.ckpt
 Indices/CRLeaves.pkl
+checkpoints/resnet/resnet_1.ckpt
+checkpoints/resnet/resnet_0.ckpt
+checkpoints/efficientnet/efficientnet_1.ckpt
+checkpoints/efficientnet/efficientnet_0.ckpt
+checkpoints/convnext/convnext_1.ckpt
+checkpoints/convnext/convnext_0.ckpt
