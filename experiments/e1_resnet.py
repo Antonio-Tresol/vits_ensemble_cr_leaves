@@ -8,6 +8,7 @@ def main():
     )
     parentdir = os.path.dirname(currentdir)
     sys.path.insert(0, parentdir)
+
     import torch
     from pytorch_lightning.loggers import WandbLogger
     from helper_functions import count_classes
@@ -29,8 +30,7 @@ def main():
     torch.set_float32_matmul_precision("high")
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    root_dir = "CRLeaves/"
-    class_count = count_classes(root_dir)
+    class_count = count_classes(config.ROOT_DIR)
 
     metrics = MetricCollection(
         {
@@ -38,25 +38,14 @@ def main():
             "BalancedAccuracy": MulticlassAccuracy(num_classes=class_count),
         }
     )
-    from conv.convnext import ConvNext
-
-    convnext = ConvNext(num_classes=class_count, device=device)
-    model = ConvolutionalLightningModule(
-        conv_model=convnext,
-        loss_fn=nn.CrossEntropyLoss(),
-        metrics=metrics,
-        lr=config.LR,
-        scheduler_max_it=config.SCHEDULER_MAX_IT,
-    )
-
     train_transform, test_transform = get_conv_model_transformations()
 
     cr_leaves_dm = CRLeavesDataModule(
-        root_dir=root_dir,
+        root_dir=config.ROOT_DIR,
         batch_size=config.BATCH_SIZE,
         test_size=config.TEST_SIZE,
         use_index=True,
-        indices_dir="Indices/",
+        indices_dir=config.INDICES_DIR,
         sampling=Sampling.NONE,
         train_transform=test_transform,
         test_transform=test_transform,
@@ -65,33 +54,46 @@ def main():
     cr_leaves_dm.prepare_data()
     cr_leaves_dm.create_data_loaders()
 
-    early_stop_callback = EarlyStopping(
-        monitor="val/loss",
-        patience=config.PATIENCE,
-        strict=False,
-        verbose=False,
-        mode="min",
-    )
-    checkpoint_callback = ModelCheckpoint(
-        monitor="val/loss",
-        dirpath="checkpoints/convnext/",
-        filename="convnext",
-        save_top_k=1,
-        mode="min",
-    )
-    rand_id = wandb.util.generate_id()
-    rand_id = "conv_next_" + rand_id
-    wandb_logger = WandbLogger(project="CR_Leaves", id=rand_id, resume="allow")
+    from conv.resnet import ResNet50
 
-    trainer = Trainer(
-        logger=wandb_logger,
-        callbacks=[early_stop_callback, checkpoint_callback],
-        max_epochs=config.EPOCHS,
-        log_every_n_steps=1,
-    )
+    for i in range(config.NUM_TRIALS):
 
-    trainer.fit(model, datamodule=cr_leaves_dm)
-    trainer.test(model, datamodule=cr_leaves_dm)
+        resnet = ResNet50(num_classes=class_count, device=device)
+        model = ConvolutionalLightningModule(
+            conv_model=resnet,
+            loss_fn=nn.CrossEntropyLoss(),
+            metrics=metrics,
+            lr=config.LR,
+            scheduler_max_it=config.SCHEDULER_MAX_IT,
+        )
+
+        early_stop_callback = EarlyStopping(
+            monitor="val/loss",
+            patience=config.PATIENCE,
+            strict=False,
+            verbose=False,
+            mode="min",
+        )
+        checkpoint_callback = ModelCheckpoint(
+            monitor="val/loss",
+            dirpath=config.RESNET_DIR,
+            filename=config.RESNET_FILENAME + str(i),
+            save_top_k=config.TOP_K_SAVES,
+            mode="min",
+        )
+
+        id = config.RESNET_FILENAME + str(i)
+        wandb_logger = WandbLogger(project=config.WAND_PROJECT, id=id, resume="allow")
+
+        trainer = Trainer(
+            logger=wandb_logger,
+            callbacks=[early_stop_callback, checkpoint_callback],
+            max_epochs=config.EPOCHS,
+            log_every_n_steps=1,
+        )
+
+        trainer.fit(model, datamodule=cr_leaves_dm)
+        trainer.test(model, datamodule=cr_leaves_dm)
 
     wandb.finish()
 

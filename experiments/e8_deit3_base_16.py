@@ -2,21 +2,22 @@ def main():
     import os
     import sys
     import inspect
+    import os
+
+    os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 
     currentdir = os.path.dirname(
         os.path.abspath(inspect.getfile(inspect.currentframe()))
     )
     parentdir = os.path.dirname(currentdir)
     sys.path.insert(0, parentdir)
+
     import torch
     from pytorch_lightning.loggers import WandbLogger
     from helper_functions import count_classes
 
-    from conv.conv_module import (
-        ConvolutionalLightningModule,
-        get_conv_model_transformations,
-    )
     from pytorch_lightning.callbacks import ModelCheckpoint
+    from vit.vit_module import ViTLightningModule, get_vit_model_transformations
     from pytorch_lightning import Trainer
     from pytorch_lightning.callbacks import EarlyStopping, ModelSummary
     from data_modules import CRLeavesDataModule, Sampling
@@ -38,18 +39,11 @@ def main():
             "BalancedAccuracy": MulticlassAccuracy(num_classes=class_count),
         }
     )
-    from conv.efficientnet import EfficientNetB4
+    from vit.deit3_base_16 import Deit3Base16
 
-    efficientNet = EfficientNetB4(num_classes=class_count, device=device)
-    model = ConvolutionalLightningModule(
-        conv_model=efficientNet,
-        loss_fn=nn.CrossEntropyLoss(),
-        metrics=metrics,
-        lr=config.LR,
-        scheduler_max_it=config.SCHEDULER_MAX_IT,
-    )
+    deit_base_16 = Deit3Base16(class_count, device=device)
 
-    train_transform, test_transform = get_conv_model_transformations()
+    test_transform = deit_base_16.get_transforms()
 
     cr_leaves_dm = CRLeavesDataModule(
         root_dir=root_dir,
@@ -65,31 +59,41 @@ def main():
     cr_leaves_dm.prepare_data()
     cr_leaves_dm.create_data_loaders()
 
-    early_stop_callback = EarlyStopping(
-        monitor="val/loss",
-        patience=config.PATIENCE,
-        strict=False,
-        verbose=False,
-        mode="min",
-    )
-    checkpoint_callback = ModelCheckpoint(
-        monitor="val/loss",
-        dirpath="checkpoints/efficientnet/",
-        filename="efficientnet",
-        save_top_k=1,
-        mode="min",
-    )
-    wandb_logger = WandbLogger(project="CR_Leaves", id="efficient_net", resume="allow")
+    for i in range(config.NUM_TRIALS):
+        early_stop_callback = EarlyStopping(
+            monitor="val/loss",
+            patience=config.PATIENCE,
+            strict=False,
+            verbose=False,
+            mode="min",
+        )
+        model = ViTLightningModule(
+            vit_model=deit_base_16,
+            lr=config.LR,
+            loss_fn=nn.CrossEntropyLoss(),
+            metrics=metrics,
+            scheduler_max_it=config.SCHEDULER_MAX_IT,
+        )
+        checkpoint_callback = ModelCheckpoint(
+            monitor="val/loss",
+            dirpath=config.DEIT3_BASE_16_DIR,
+            filename=config.DEIT3_BASE_16_FILENAME + str(i),
+            save_top_k=config.TOP_K_SAVES,
+            mode="min",
+        )
 
-    trainer = Trainer(
-        logger=wandb_logger,
-        callbacks=[early_stop_callback, checkpoint_callback],
-        max_epochs=config.EPOCHS,
-        log_every_n_steps=1,
-    )
+        id = config.DEIT3_BASE_16_FILENAME + str(i)
+        wandb_logger = WandbLogger(project=config.WAND_PROJECT, id=id, resume="allow")
 
-    trainer.fit(model, datamodule=cr_leaves_dm)
-    trainer.test(model, datamodule=cr_leaves_dm)
+        trainer = Trainer(
+            logger=wandb_logger,
+            callbacks=[early_stop_callback, checkpoint_callback],
+            max_epochs=config.EPOCHS,
+            log_every_n_steps=1,
+        )
+
+        trainer.fit(model, datamodule=cr_leaves_dm)
+        trainer.test(model, datamodule=cr_leaves_dm)
 
     wandb.finish()
 

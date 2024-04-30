@@ -27,8 +27,7 @@ def main():
     torch.set_float32_matmul_precision("high")
     device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    root_dir = "CRLeaves/"
-    class_count = count_classes(root_dir)
+    class_count = count_classes(config.ROOT_DIR)
 
     metrics = MetricCollection(
         {
@@ -36,62 +35,62 @@ def main():
             "BalancedAccuracy": MulticlassAccuracy(num_classes=class_count),
         }
     )
-    from vit.vit_small_32 import VitSmallModel32
-
-    vit_small = VitSmallModel32(class_count, device=device)
-    model = ViTLightningModule(
-        vit_model=vit_small,
-        loss_fn=nn.CrossEntropyLoss(),
-        metrics=metrics,
-        lr=config.LR,
-        scheduler_max_it=config.SCHEDULER_MAX_IT,
-    )
+    from vit.vit_base_16 import VitBase16
 
     train_transform, test_transform = get_vit_model_transformations()
 
     cr_leaves_dm = CRLeavesDataModule(
-        root_dir=root_dir,
+        root_dir=config.ROOT_DIR,
         batch_size=config.BATCH_SIZE,
         test_size=config.TEST_SIZE,
         use_index=True,
-        indices_dir="Indices/",
+        indices_dir=config.INDICES_DIR,
         sampling=Sampling.NONE,
-        train_transform=train_transform,
+        train_transform=test_transform,
         test_transform=test_transform,
     )
 
     cr_leaves_dm.prepare_data()
     cr_leaves_dm.create_data_loaders()
 
-    early_stop_callback = EarlyStopping(
-        monitor="val/loss",
-        patience=config.PATIENCE,
-        strict=False,
-        verbose=False,
-        mode="min",
-    )
+    for i in range(config.NUM_TRIALS):
+        vit_base_16 = VitBase16(class_count, device=device)
 
-    checkpoint_callback = ModelCheckpoint(
-        monitor="val/loss",
-        dirpath="checkpoints/vit_small_32/",
-        filename="vit_small_32",
-        save_top_k=1,
-        mode="min",
-    )
+        model = ViTLightningModule(
+            vit_model=vit_base_16,
+            loss_fn=nn.CrossEntropyLoss(),
+            metrics=metrics,
+            lr=config.LR,
+            scheduler_max_it=config.SCHEDULER_MAX_IT,
+        )
 
-    rand_id = wandb.util.generate_id()
-    rand_id = "vit_small_32_" + rand_id
-    wandb_logger = WandbLogger(project="CR_Leaves", id=rand_id, resume="allow")
+        early_stop_callback = EarlyStopping(
+            monitor="val/loss",
+            patience=config.PATIENCE,
+            strict=False,
+            verbose=False,
+            mode="min",
+        )
+        checkpoint_callback = ModelCheckpoint(
+            monitor="val/loss",
+            dirpath=config.VIT_BASE_16_DIR,
+            filename=config.VIT_BASE_16_FILENAME + str(i),
+            save_top_k=config.TOP_K_SAVES,
+            mode="min",
+        )
 
-    trainer = Trainer(
-        logger=wandb_logger,
-        callbacks=[early_stop_callback, checkpoint_callback],
-        max_epochs=config.EPOCHS,
-        log_every_n_steps=1,
-    )
+        id = config.VIT_BASE_16_FILENAME + str(i)
+        wandb_logger = WandbLogger(project=config.WANDB_PROJECT, id=id, resume="allow")
 
-    trainer.fit(model, datamodule=cr_leaves_dm)
-    trainer.test(model, datamodule=cr_leaves_dm)
+        trainer = Trainer(
+            logger=wandb_logger,
+            callbacks=[early_stop_callback, checkpoint_callback],
+            max_epochs=config.EPOCHS,
+            log_every_n_steps=1,
+        )
+
+        trainer.fit(model, datamodule=cr_leaves_dm)
+        trainer.test(model, datamodule=cr_leaves_dm)
 
     wandb.finish()
 
