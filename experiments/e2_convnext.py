@@ -56,7 +56,7 @@ def main():
         root_dir=config.ROOT_DIR,
         batch_size=config.BATCH_SIZE,
         test_size=config.TEST_SIZE,
-        use_index=True,
+        use_index=config.USE_INDEX,
         indices_dir=config.INDICES_DIR,
         sampling=Sampling.NONE,
         train_transform=test_transform,

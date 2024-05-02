@@ -43,7 +43,7 @@ def main():
         root_dir=root_dir,
         batch_size=config.BATCH_SIZE,
         test_size=config.TEST_SIZE,
-        use_index=True,
+        use_index=config.USE_INDEX,
         indices_dir="Indices/",
         sampling=Sampling.NONE,
         train_transform=train_transform,

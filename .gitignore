@@ -36,3 +36,7 @@ checkpoints/efficientnet/efficientnet_1.ckpt
 checkpoints/efficientnet/efficientnet_0.ckpt
 checkpoints/convnext/convnext_1.ckpt
 checkpoints/convnext/convnext_0.ckpt
+experiments.sh
+vit_cr_leaves.out
+vit/__pycache__/deit3_base_16.cpython-311.pyc
+vit/__pycache__/vit_module.cpython-311.pyc

@@ -62,3 +62,5 @@ CONV_ENSEMBLE_CSV_FILENAME = METRICS_DIR + CONV_ENSEMBLE_FILENAME + "metrics.csv
 
 # checkpoint parameters
 TOP_K_SAVES = 1
+
+USE_INDEX = False
