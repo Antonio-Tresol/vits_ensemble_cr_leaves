@@ -55,6 +55,7 @@ def main():
 
     from vit.vit_base_16 import VitBase16
     from vit.vit_base_32 import VitBase32
+    from vit.vit_large_32 import VitLarge32
     from vit.vit_ensemble import EnsembleViTModule
     from vit.deit3_base_16 import Deit3Base16
 
@@ -74,13 +75,13 @@ def main():
             scheduler_max_it=config.SCHEDULER_MAX_IT,
         ).vit
 
-        deit_base_16 = Deit3Base16(class_count, device=device)
+        vit_large_32 = VitLarge32(class_count, device=device)
         checkpoint_filename = (
-            config.DEIT3_BASE_16_DIR + config.DEIT3_BASE_16_FILENAME + str(i) + ".ckpt"
+            config.VIT_BASE_32_DIR + config.VIT_BASE_32_FILENAME str(i) + ".ckpt"
         )
-        deit_base_16 = ViTLightningModule.load_from_checkpoint(
+        vit_large_32 = ViTLightningModule.load_from_checkpoint(
             checkpoint_path=checkpoint_filename,
-            vit_model=deit_base_16,
+            vit_model=vit_large_32,
             lr=config.LR,
             loss_fn=nn.CrossEntropyLoss(),
             metrics=metrics,
@@ -101,7 +102,7 @@ def main():
         ).vit
 
         ensemble_vit = EnsembleViTModule(
-            models=[vit_base_16, deit_base_16, vit_base_32],
+            models=[vit_base_16, vit_large_32, vit_base_32],
             metrics=metrics,
         )
 
