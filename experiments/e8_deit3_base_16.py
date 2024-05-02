@@ -96,7 +96,7 @@ def main():
         metrics_data.append(trainer.test(model, datamodule=cr_leaves_dm)[0])
         wandb.finish()
     pd.DataFrame(metrics_data).to_csv(
-        config.DEIT3_BASE_16_CSV_FILENAME + "metrics.csv", index=False
+        config.DEIT3_BASE_16_CSV_FILENAME, index=False
     )
 
 
