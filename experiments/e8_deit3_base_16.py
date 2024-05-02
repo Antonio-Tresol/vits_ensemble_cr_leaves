@@ -60,6 +60,7 @@ def main():
     cr_leaves_dm.create_data_loaders()
     metrics_data = []
     for i in range(config.NUM_TRIALS):
+        deit_base_16 = Deit3Base16(class_count, device=device)
         early_stop_callback = EarlyStopping(
             monitor="val/loss",
             patience=config.PATIENCE,

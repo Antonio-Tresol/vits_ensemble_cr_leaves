@@ -42,15 +42,6 @@ def main():
 
     from conv.efficientnet import EfficientNetB4
 
-    efficientNet = EfficientNetB4(num_classes=class_count, device=device)
-    model = ConvolutionalLightningModule(
-        conv_model=efficientNet,
-        loss_fn=nn.CrossEntropyLoss(),
-        metrics=metrics,
-        lr=config.LR,
-        scheduler_max_it=config.SCHEDULER_MAX_IT,
-    )
-
     train_transform, test_transform = get_conv_model_transformations()
 
     cr_leaves_dm = CRLeavesDataModule(
@@ -69,7 +60,14 @@ def main():
 
     metrics_data = []
     for i in range(config.NUM_TRIALS):
-
+        efficientNet = EfficientNetB4(num_classes=class_count, device=device)
+        model = ConvolutionalLightningModule(
+            conv_model=efficientNet,
+            loss_fn=nn.CrossEntropyLoss(),
+            metrics=metrics,
+            lr=config.LR,
+            scheduler_max_it=config.SCHEDULER_MAX_IT,
+        )
         early_stop_callback = EarlyStopping(
             monitor="val/loss",
             patience=config.PATIENCE,
