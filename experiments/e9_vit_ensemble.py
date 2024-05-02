@@ -77,7 +77,7 @@ def main():
 
         vit_large_32 = VitLarge32(class_count, device=device)
         checkpoint_filename = (
-            config.VIT_BASE_32_DIR + config.VIT_BASE_32_FILENAME + str(i) + ".ckpt"
+            config.VIT_LARGE_32_DIR + config.VIT_LARGE_32_FILENAME + str(i) + ".ckpt"
         )
         vit_large_32 = ViTLightningModule.load_from_checkpoint(
             checkpoint_path=checkpoint_filename,
