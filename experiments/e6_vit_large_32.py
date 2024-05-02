@@ -84,7 +84,7 @@ def main():
             mode="min",
         )
 
-        id = config.VIT_LARGE_32_FILENAME + str(i)
+        id = config.VIT_LARGE_32_FILENAME + str(i) + "_" + wandb.util.generate_id()
 
         logger_vit_medium = WandbLogger(
             project=config.WANDB_PROJECT, id=id, resume="allow"

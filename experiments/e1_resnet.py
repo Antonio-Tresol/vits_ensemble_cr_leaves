@@ -85,7 +85,7 @@ def main():
             mode="min",
         )
 
-        id = config.RESNET_FILENAME + str(i)
+        id = config.RESNET_FILENAME + str(i) + "_" + wandb.util.generate_id()
         wandb_logger = WandbLogger(project=config.WANDB_PROJECT, id=id, resume="allow")
 
         trainer = Trainer(

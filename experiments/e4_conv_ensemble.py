@@ -103,7 +103,7 @@ def main():
             metrics=metrics,
         )
 
-        id = config.CONV_ENSEMBLE_FILENAME + str(i)
+        id = config.CONV_ENSEMBLE_FILENAME + str(i) + "_" + wandb.util.generate_id()
         # test the ensemble model
         logger_conv_ensemble = WandbLogger(
             project=config.WANDB_PROJECT, id=id, resume="allow"

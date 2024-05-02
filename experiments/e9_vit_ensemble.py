@@ -106,7 +106,7 @@ def main():
             metrics=metrics,
         )
 
-        id = "vit_ensemble_" + str(i)
+        id = "vit_ensemble_" + str(i) + "_" + wandb.util.generate_id()
 
         # test the ensemble model
         logger_vit_ensemble = WandbLogger(

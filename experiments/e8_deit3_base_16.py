@@ -29,7 +29,7 @@ def main():
 
     torch.set_float32_matmul_precision("high")
     device = "cuda" if torch.cuda.is_available() else "cpu"
-
+    
     root_dir = "CRLeaves/"
     class_count = count_classes(root_dir)
 
@@ -82,7 +82,7 @@ def main():
             mode="min",
         )
 
-        id = config.DEIT3_BASE_16_FILENAME + str(i)
+        id = config.DEIT3_BASE_16_FILENAME + str(i) + "_" + wandb.util.generate_id()
         wandb_logger = WandbLogger(project=config.WANDB_PROJECT, id=id, resume="allow")
 
         trainer = Trainer(

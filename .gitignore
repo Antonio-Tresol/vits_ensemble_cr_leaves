@@ -40,3 +40,5 @@ experiments.sh
 vit_cr_leaves.out
 vit/__pycache__/deit3_base_16.cpython-311.pyc
 vit/__pycache__/vit_module.cpython-311.pyc
+checkpoints/deit3_base_16/deit3_base_16_0-v1.ckpt
+vit/__pycache__/vit_base_32.cpython-311.pyc

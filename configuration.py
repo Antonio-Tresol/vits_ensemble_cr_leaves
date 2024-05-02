@@ -1,5 +1,5 @@
 # models
-LR = 0.01
+LR = 0.0003 
 SCHEDULER_MAX_IT = 30
 WEIGH_DECAY = 1e-4
 EPSILON = 1e-4
@@ -8,13 +8,13 @@ EPSILON = 1e-4
 BATCH_SIZE = 64
 TEST_SIZE = 0.5
 TRAIN_SIZE = 1 - TEST_SIZE
-EPOCHS = 5
+EPOCHS = 30
 
 # callback
 PATIENCE = 3
 
 # training loop
-NUM_TRIALS = 2
+NUM_TRIALS = 30
 
 # file paths
 ROOT_DIR = "CRLeaves/"
@@ -63,4 +63,4 @@ CONV_ENSEMBLE_CSV_FILENAME = METRICS_DIR + CONV_ENSEMBLE_FILENAME + "metrics.csv
 # checkpoint parameters
 TOP_K_SAVES = 1
 
-USE_INDEX = False
+USE_INDEX = True 
