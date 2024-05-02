@@ -14,7 +14,7 @@ EPOCHS = 30
 PATIENCE = 3
 
 # training loop
-NUM_TRIALS = 30
+NUM_TRIALS = 11
 
 # file paths
 ROOT_DIR = "CRLeaves/"
