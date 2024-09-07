@@ -1,6 +1,6 @@
 ## Transformers Unidos: Eficacia De los Modelos Ensemble-ViT en Clasificación Automática de Flora Costarricense 🌿
 
-This repository contains the code used to run the experiments for the paper "Transformers Unidos: Eficacia De los Modelos Ensemble-ViT en Clasificación Automática de Flora Costarricense 🌿". The paper explores the effectiveness of Vision Transformers ensemble models in comparison to an ensemble model with convolutional networks for the recognition of Costa Rican flora.
+This repository contains the code used to run the experiments for the paper "Transformers Unidos: Eficacia De los Modelos Ensemble-ViT en Clasificación Automática de Flora Costarricense 🌿". The paper explores the effectiveness of Vision Transformers ensemble models in comparison to an ensemble model with convolutional networks for the recognition of Costa Rican flora. The article can be found in <a href="https://github.com/Antonio-Tresol/vits_ensemble_cr_leaves/blob/main/articulo_6jifi_2024_abadilla_evilchez_rgonzalez.pdf"> the following link </a> (in spanish).
 
 ## Contents
 
